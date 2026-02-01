@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catch My Heart: Valentine Boss Run</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Confetti for ending -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- Header / HUD -->
+    <div class="hud">
+        <div class="hud-item score-box">
+            <span class="label">SCORE</span>
+            <span id="score-val">0</span>
+        </div>
+        <div class="hud-item level-box">
+            <span class="label">LEVEL</span>
+            <span id="level-val">1</span>
+        </div>
+        <div class="hud-item target-box">
+            <span class="label">GOAL</span>
+            <span id="target-val">300</span>
+        </div>
+        <div class="hud-item combo-box">
+            <span class="label">COMBO</span>
+            <span id="combo-val">0</span>
+            <div class="combo-bar"><div id="combo-fill"></div></div>
+        </div>
+        <button id="pause-btn" class="hud-btn" aria-label="Pause Game">⏸️</button>
+    </div>
+    
+    <!-- Progress Bar Layer -->
+    <div id="level-progress-bar" style="position: absolute; top: 80px; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 5;">
+        <div id="progress-fill" style="height: 100%; width: 0%; background: #00ff00; transition: width 0.3s;"></div>
+    </div>
+
+    <!-- Canvas Layer -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Floating Text Layer (DOM overlay for crisp text) -->
+    <div id="floating-text-layer"></div>
+
+    <!-- Screens Overlay -->
+    <div id="ui-layer">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <h1 class="title">Catch My Heart 💘</h1>
+            <h2 class="subtitle">Valentine Boss Run</h2>
+            <p class="warning-text">Warning: This game fights back 😈</p>
+            
+            <div class="settings-box">
+                <label class="toggle-control">
+                    <input type="checkbox" id="sound-toggle">
+                    <span class="control-label">Sound 🔊</span>
+                </label>
+                <label class="toggle-control">
+                    <input type="checkbox" id="motion-toggle">
+                    <span class="control-label">Reduce Motion 🌿</span>
+                </label>
+            </div>
+
+            <button id="start-btn" class="btn primary">START GAME</button>
+        </div>
+
+        <!-- Tutorial Overlay -->
+        <div id="tutorial-screen" class="screen overlay-screen">
+            <h2>How to Play</h2>
+            <div class="tutorial-grid">
+                <div class="tut-item">❤️ Tap Hearts</div>
+                <div class="tut-item">💔 Avoid Broken</div>
+                <div class="tut-item">🔥 Build Combos</div>
+                <div class="tut-item">⚡ Use Powerups</div>
+            </div>
+            <button id="tutorial-btn" class="btn primary">GOT IT!</button>
+        </div>
+
+        <!-- Level Transition Screen -->
+        <div id="level-screen" class="screen">
+            <h2 id="level-title">Level 1</h2>
+            <p id="level-desc">Warmup Love</p>
+            <p id="level-objective" class="objective">Goal: Reach 600 pts</p>
+            <div id="level-countdown">3</div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-screen" class="screen overlay-screen">
+            <h2>PAUSED</h2>
+            <button id="resume-btn" class="btn primary">RESUME</button>
+            <button id="restart-btn" class="btn secondary">RESTART LEVEL</button>
+            <button id="quit-btn" class="btn secondary">QUIT TO MENU</button>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="level-complete-screen" class="screen">
+            <h2>LEVEL CLEAR!</h2>
+            <div id="star-rating" style="font-size: 2rem; margin-bottom: 10px;">⭐⭐⭐</div>
+            <p id="complete-msg">Amazing!</p>
+            <div class="stats-recap">
+                <p>Score: <span id="stat-score">0</span></p>
+                <p>Best Combo: <span id="stat-combo">0</span></p>
+                <p>Accuracy: <span id="stat-acc">0%</span></p>
+            </div>
+            <button id="next-level-btn" class="btn primary">CONTINUE</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen">
+            <h2>GAME OVER</h2>
+            <p id="death-reason">Ran out of love...</p>
+            <div class="final-stats">
+                <p>Score: <span id="final-score-val">0</span></p>
+                <p>Best Combo: <span id="final-combo-val">0</span></p>
+                <p>Accuracy: <span id="final-acc-val">0%</span></p>
+            </div>
+            <button id="retry-btn" class="btn secondary">TRY AGAIN 🥺</button>
+            <button id="menu-btn" class="btn secondary">MENU</button>
+        </div>
+
+        <!-- Victory / Valentine Proposal Screen -->
+        <div id="victory-screen" class="screen">
+            <h1>YOU WON! 🏆</h1>
+            <p class="victory-subtitle">You officially caught my heart ❤️</p>
+            
+            <!-- Trash Dove or Cute GIF -->
+            <div class="gif-container">
+                <img src="https://media.tenor.com/2s90sZ_B2c8AAAAC/trash-dove-fan.gif" alt="Funny Love Dove" class="victory-gif">
+            </div>
+
+            <div class="proposal-box">
+                <h2>Will you be my Valentine?</h2>
+                <div class="proposal-buttons">
+                    <button id="yes-btn" class="btn big-yes">YES! 💖</button>
+                    <button id="no-btn" class="btn small-no">No</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Success Screen (Final) -->
+        <div id="success-screen" class="screen">
+            <h1>YEEES!!! 💘</h1>
+            <p>Best decision ever.</p>
+            <p class="love-note">Now go give me a hug!</p>
+            <div class="final-actions">
+                <button id="replay-btn" class="btn secondary">Replay Game</button>
+                <button id="reset-btn" class="btn secondary">Reset Data</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
