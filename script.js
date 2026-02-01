@@ -24,6 +24,9 @@ const CONFIG = {
     BROKEN_PENALTY: 10,
     COMBO_TIMER: 2000, // ms to keep combo alive
     SPEED_MULTIPLIER: 1.5,
+    MOBILE_SPAWN_MULTIPLIER: 2,
+    MAX_ENTITIES_MOBILE: 60,
+    MAX_ENTITIES_DESKTOP: 35,
     
     // Entity Types
     TYPES: {
@@ -181,6 +184,7 @@ class Game {
         if (!this.canvas) throw new Error('Canvas not found');
         
         this.ctx = this.canvas.getContext('2d');
+        this.isMobile = ('ontouchstart' in window) || window.matchMedia('(max-width: 600px)').matches;
         
         // State
         this.state = 'START'; // START, TUTORIAL, PLAYING, PAUSED, LEVEL_COMPLETE, GAMEOVER, VICTORY, SUCCESS
@@ -625,7 +629,12 @@ class Game {
         // Spawning
         this.spawnTimer += dt;
         if (this.spawnTimer > this.levelConfig.spawnRate) {
-            this.spawnEntity();
+            const cap = this.isMobile ? CONFIG.MAX_ENTITIES_MOBILE : CONFIG.MAX_ENTITIES_DESKTOP;
+            const times = this.isMobile ? CONFIG.MOBILE_SPAWN_MULTIPLIER : 1;
+            for (let k = 0; k < times; k++) {
+                if (this.entities.length >= cap) break;
+                this.spawnEntity();
+            }
             this.spawnTimer = 0;
         }
 
@@ -642,26 +651,10 @@ class Game {
             const ent = this.entities[i];
             ent.y += ent.vy;
             ent.x += ent.vx;
-            
-            // Wall bounce (optional, mostly fall down)
-            if (ent.x < ent.radius || ent.x > this.canvas.width - ent.radius) ent.vx *= -1;
-
-            // Remove off-screen
-            if (ent.y > this.canvas.height + 50) {
-                if (ent.type === CONFIG.TYPES.NORMAL || ent.type === CONFIG.TYPES.GOLDEN) {
-                    // Missed a good heart
-                    // Optional: Penalty? For now, just reset combo
-                    if (this.combo > 0) this.combo = 0;
-                } else if (ent.type === CONFIG.TYPES.BROKEN) {
-                    this.stats.trapsDodged++;
-                    // Funny text for dodging
-                    if (Math.random() < 0.1) {
-                         const msg = CONFIG.MESSAGES.NEAR_MISS[Math.floor(Math.random() * CONFIG.MESSAGES.NEAR_MISS.length)];
-                         this.showFloatingText(ent.x, this.canvas.height - 50, msg, "#aaa", 14);
-                    }
-                }
-                this.entities.splice(i, 1);
-            }
+            if (ent.x < ent.radius) { ent.x = ent.radius; ent.vx = Math.abs(ent.vx); }
+            else if (ent.x > this.canvas.width - ent.radius) { ent.x = this.canvas.width - ent.radius; ent.vx = -Math.abs(ent.vx); }
+            if (ent.y < ent.radius) { ent.y = ent.radius; ent.vy = Math.abs(ent.vy); }
+            else if (ent.y > this.canvas.height - ent.radius) { ent.y = this.canvas.height - ent.radius; ent.vy = -Math.abs(ent.vy); }
         }
 
         this.updateParticles(dt);
