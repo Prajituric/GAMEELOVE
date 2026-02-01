@@ -23,7 +23,7 @@ const CONFIG = {
     GOLD_SCORE: 50,
     BROKEN_PENALTY: 10,
     COMBO_TIMER: 2000, // ms to keep combo alive
-    SPEED_MULTIPLIER: 0.5,
+    SPEED_MULTIPLIER: 1.5,
     
     // Entity Types
     TYPES: {
